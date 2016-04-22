@@ -1,4 +1,5 @@
 var camera, scene, render, player;
+var walls = [];
 
 init();
 animate();
@@ -7,31 +8,21 @@ function init(){
 
   scene = new THREE.Scene();
 
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
-  camera.position.set(0,5,0);
-  //camera.lookAt(scene.position); 
   createPlayer();
 
   renderer = new THREE.WebGLRenderer();
   renderer.setSize(window.innerWidth, window.innerHeight)
   document.body.appendChild(renderer.domElement);
 
-  var size = 30, step = 3;
+  grid(90,3);
 
-  var geometry = new THREE.Geometry();
-  var material = new THREE.LineBasicMaterial({color: 'green'});   
-
-  for ( var i = - size; i <= size; i += step){
-    geometry.vertices.push(new THREE.Vector3( - size, - 0.04, i ));
-    geometry.vertices.push(new THREE.Vector3( size, - 0.04, i ));
-
-    geometry.vertices.push(new THREE.Vector3( i, - 0.04, - size ));
-    geometry.vertices.push(new THREE.Vector3( i, - 0.04, size ));
-
+  for(var i=0;i<50;i+=5){
+    var wall = new THREE.Mesh(new THREE.CubeGeometry(5,8,5), new THREE.MeshNormalMaterial());
+    scene.add(wall);
+    wall.position.set(i,4,10);
+    walls.push(wall);
   }
 
-  var line = new THREE.Line( geometry, material, THREE.LinePieces);
-  scene.add(line);
   window.addEventListener( "keydown", keyDown, false );
   window.addEventListener( "keyup", keyUp, false );
   render();
@@ -50,12 +41,19 @@ function render() {
 
 function playerUpdate(){
   if(player.forward){
-    player.translateZ(-1)
+    player.translateZ(-player.speed)
+    walls.forEach(function(wall){
+      if(collid(player,wall)){player.translateZ(player.speed)};
+    });
   }
 
   if(player.back){
-    player.translateZ(1)
+    player.translateZ(player.speed)
+    walls.forEach(function(wall){
+      if(collid(player,wall)){player.translateZ(-player.speed)};
+    });
   }
+
 
   if(player.left){
     player.rotateY(.1);
@@ -64,11 +62,19 @@ function playerUpdate(){
   if(player.right){
     player.rotateY(-.1);
   }
+
 }
 
 function createPlayer(){
-  player = camera;
+  //player = camera;
+  player = new THREE.Mesh(new THREE.CubeGeometry(5,8,5), new THREE.MeshNormalMaterial());
+  scene.add(player);
+  player.position.y = 4;
   player.speed = 1;
+
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
+  camera.position.set(0,4,0);
+  player.add(camera); //parent camera to player
 }
 
 function keyDown(e){
@@ -124,3 +130,55 @@ function keyUp(e){
  
 }
 
+function grid(size,step){
+
+  var geometry = new THREE.Geometry();
+  var material = new THREE.LineBasicMaterial({color: 'green'});   
+
+  for ( var i = - size; i <= size; i += step){
+    geometry.vertices.push(new THREE.Vector3( - size, - 0.04, i ));
+    geometry.vertices.push(new THREE.Vector3( size, - 0.04, i ));
+
+    geometry.vertices.push(new THREE.Vector3( i, - 0.04, - size ));
+    geometry.vertices.push(new THREE.Vector3( i, - 0.04, size ));
+
+  }
+
+  var line = new THREE.Line( geometry, material, THREE.LineSegments);
+  scene.add(line);
+
+}
+
+//checks the distance between two object
+function check_distance(obj, obj1){
+    var DIS = new Object();
+    if(obj.position.x > obj1.position.x){
+        DIS['x'] = obj.position.x - obj1.position.x;
+    }else{
+        DIS['x'] = obj1.position.x - obj.position.x;
+    }
+
+    if(obj.position.y > obj1.position.y){
+        DIS['y'] = obj.position.y - obj1.position.y;
+    }else{
+        DIS['y'] = obj1.position.y - obj.position.y;
+    }
+
+    if(obj.position.z > obj1.position.z){
+        DIS['z'] = obj.position.z - obj1.position.z;
+    }else{
+        DIS['z'] = obj1.position.z - obj.position.z;
+    }
+
+    x = Math.max(DIS['x'],DIS['y'],DIS['z']);
+    return x;
+}
+
+function collid(obj, obj1){
+  var dis = check_distance(obj, obj1);
+  if(dis < 5){
+    return true;
+  }else{
+    return false;
+  }
+}
