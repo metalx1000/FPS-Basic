@@ -16,10 +16,16 @@ function init(){
 
   grid(90,3);
 
+  // load a texture, set wrap mode to repeat
+  var texture = new THREE.TextureLoader().load( "res/stone.jpg" );
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set( .5,.5 );
+  //make wall
   for(var i=0;i<50;i+=5){
-    var wall = new THREE.Mesh(new THREE.CubeGeometry(5,8,5), new THREE.MeshNormalMaterial());
+    var wall = new THREE.Mesh(new THREE.CubeGeometry(5,10,5), new THREE.MeshBasicMaterial({map: texture}));
     scene.add(wall);
-    wall.position.set(i,4,10);
+    wall.position.set(i,5,10);
     walls.push(wall);
   }
 
